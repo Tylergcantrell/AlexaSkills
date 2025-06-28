@@ -3,16 +3,14 @@ import openai
 import os
 import traceback
 
-# -- Local development: load .env if present --
+# Uncomment for local dev with .env
 # from dotenv import load_dotenv
 # load_dotenv()
 
-# -- Ensure your OpenAI key is set in Render env vars or your local .env --
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = Flask(__name__)
 
-# Health check endpoint
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({
@@ -20,12 +18,10 @@ def health():
         "openai_key_set": bool(openai.api_key)
     })
 
-# Main Alexa endpoint
 @app.route("/", methods=["POST"])
 def alexa_handler():
     data = request.get_json(force=True)
 
-    # Extract the question slot
     try:
         question = data["request"]["intent"]["slots"]["question"]["value"]
     except Exception:
@@ -34,21 +30,22 @@ def alexa_handler():
     if not question:
         speak = "Sorry, I didn't catch your question. Please try again."
     else:
+        # Log that we got here and what the question is
+        print("📨 Received question:", question)
         try:
-            # Call ChatGPT
             resp = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": question}],
                 max_tokens=150
             )
-            speak = resp.choices[0].message.content.strip()
+            answer = resp.choices[0].message.content.strip()
+            print("✅ ChatGPT response received")
+            speak = answer
         except Exception as e:
-            # Log full traceback for debugging in Render logs
             traceback.print_exc()
             print("❌ ChatGPT call failed:", repr(e))
             speak = "There was an error talking to ChatGPT. Please try again later."
 
-    # Build Alexa-compatible JSON response
     return jsonify({
         "version": "1.0",
         "response": {
