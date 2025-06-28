@@ -3,10 +3,11 @@ import openai
 import os
 import traceback
 
-# Uncomment for local dev with .env
+# Uncomment for local dev with a .env file:
 # from dotenv import load_dotenv
 # load_dotenv()
 
+# Ensure your OpenAI key is set in Render env vars or your local .env
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = Flask(__name__)
@@ -30,10 +31,10 @@ def alexa_handler():
     if not question:
         speak = "Sorry, I didn't catch your question. Please try again."
     else:
-        # Log that we got here and what the question is
         print("📨 Received question:", question)
         try:
-            resp = openai.ChatCompletion.create(
+            # New v1+ call
+            resp = openai.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": question}],
                 max_tokens=150
